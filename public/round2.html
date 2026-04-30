@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photon Interview — Round 02</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main id="app">
+    <section id="screen-loading" class="screen active">
+      <div class="kicker">
+        <span><span class="num">Loading</span></span>
+        <span class="rule"></span>
+      </div>
+      <p class="muted">One moment…</p>
+    </section>
+
+    <section id="screen-not-found" class="screen">
+      <div class="kicker">
+        <span><span class="num">404</span> · Session</span>
+        <span class="rule"></span>
+      </div>
+      <h2>This link doesn't lead anywhere.</h2>
+      <p class="muted">Contact the recruiter if you think this is wrong.</p>
+    </section>
+
+    <section id="screen-already-submitted" class="screen">
+      <div class="kicker">
+        <span><span class="num">Round 02</span> · Submitted</span>
+        <span class="rule"></span>
+      </div>
+      <h2>Already in the books.</h2>
+      <p class="muted">You've already submitted round 2. Thank you.</p>
+    </section>
+
+    <section id="screen-round2" class="screen">
+      <div class="kicker">
+        <span><span class="num">Round 02</span> · Take-home</span>
+        <span class="rule"></span>
+        <span>Within 24 hours</span>
+      </div>
+
+      <h1>Now, with time.</h1>
+      <p>
+        Hi <strong id="candidate-name"></strong>. Record your answers to all
+        3 questions below at your own pace. Each answer captures your camera,
+        microphone, and screen. Re-record any question as many times as you'd
+        like before clicking <em>Submit all</em>.
+      </p>
+      <p class="muted small">
+        <a href="/questions.txt" download>Download questions</a>
+        &nbsp;·&nbsp;
+        Submit within 24 hours of finishing round 1.
+      </p>
+
+      <div class="preview-row">
+        <div class="preview-cell" data-num="01">
+          <div class="preview-label">Camera + Mic</div>
+          <video id="preview" autoplay muted playsinline></video>
+          <p id="permission-status" class="muted small">Requesting access…</p>
+        </div>
+        <div class="preview-cell" data-num="02">
+          <div class="preview-label">Screen</div>
+          <video id="screen-preview" autoplay muted playsinline></video>
+          <p id="screen-status" class="muted small">Click below to share your screen.</p>
+          <button id="share-screen-btn" type="button" class="secondary" disabled>Share screen</button>
+        </div>
+      </div>
+
+      <div id="cards"></div>
+
+      <button id="submit-all" type="button" disabled>Submit all 3 answers</button>
+      <p id="submit-error" class="error" hidden></p>
+    </section>
+
+    <section id="screen-done" class="screen">
+      <div class="kicker">
+        <span><span class="num">Round 02</span> · Submitted</span>
+        <span class="rule"></span>
+        <span>That's all</span>
+      </div>
+      <h1>Thank you.</h1>
+      <p class="muted">The recruiter will review your submission.</p>
+    </section>
+  </main>
+  <script src="/round2.js"></script>
+</body>
+</html>

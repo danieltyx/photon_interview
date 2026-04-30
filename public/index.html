@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photon Interview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main id="app">
+    <section id="screen-intake" class="screen active">
+      <div class="kicker">
+        <span><span class="num">Photon</span> · Interview · Round 01</span>
+        <span class="rule"></span>
+        <span>2026</span>
+      </div>
+
+      <h1>Something great starts here.</h1>
+
+      <p class="lede">
+        Welcome to the Photon interview process. We really liked your
+        background and would love to learn more about how you think and work.
+      </p>
+
+      <p>
+        Three questions. For each you'll get <strong>10&nbsp;minutes to think</strong>,
+        then <strong>2&nbsp;minutes to walk us through your answer</strong> out loud.
+        Your camera, microphone, and screen are recorded the entire time.
+        There are no retakes and no going back.
+      </p>
+      <p>
+        <strong>Use whatever tools help you</strong> — ChatGPT, Claude Code, Cursor, Google,
+        Stack Overflow, your IDE — all of it. We want to see how you actually work,
+        not how you perform without your tools. Just keep them on the screen we're recording.
+      </p>
+
+      <hr class="intake-divider" />
+
+      <form id="intake-form" autocomplete="on">
+        <label>Full name
+          <input name="name" required autocomplete="name" placeholder="Ada Lovelace" />
+        </label>
+        <label>Email
+          <input type="email" name="email" required autocomplete="email" placeholder="ada@example.com" />
+        </label>
+        <label>LinkedIn URL
+          <input type="url" name="linkedin" placeholder="https://linkedin.com/in/..." />
+        </label>
+        <label>GitHub URL
+          <input type="url" name="github" placeholder="https://github.com/..." />
+        </label>
+        <label>Resume <span style="font-weight:400;letter-spacing:0.12em;color:var(--ink-faint);">(PDF · DOC · DOCX, max 20 MB)</span>
+          <input type="file" name="resume" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required />
+        </label>
+        <button type="submit" id="intake-submit">Continue</button>
+        <p id="intake-error" class="error" hidden></p>
+      </form>
+
+      <footer class="intake-footer">
+        <p class="muted small">
+          Any questions? Email
+          <a href="mailto:daniel@photon.codes">daniel@photon.codes</a>
+          &nbsp;·&nbsp;
+          <a href="https://tryphoton.ai" target="_blank" rel="noreferrer">tryphoton.ai</a>
+        </p>
+      </footer>
+    </section>
+
+    <section id="screen-permission" class="screen">
+      <div class="kicker">
+        <span><span class="num">02</span> · Permissions</span>
+        <span class="rule"></span>
+        <span>Camera · Mic · Screen</span>
+      </div>
+
+      <h2>Three things, in this order.</h2>
+      <p>
+        Allow camera and microphone access, then click <em>Share screen</em> and
+        choose your <strong>entire screen</strong>. When everything is ready,
+        press <em>Start question 01</em> — the timer begins immediately.
+      </p>
+
+      <div class="preview-row">
+        <div class="preview-cell" data-num="01">
+          <div class="preview-label">Camera + Mic</div>
+          <video id="preview" autoplay muted playsinline></video>
+          <p id="permission-status" class="muted small">Requesting access…</p>
+        </div>
+        <div class="preview-cell" data-num="02">
+          <div class="preview-label">Screen</div>
+          <video id="screen-preview" autoplay muted playsinline></video>
+          <p id="screen-status" class="muted small">Click below to share your screen.</p>
+          <button id="share-screen-btn" type="button" class="secondary" disabled>Share screen</button>
+        </div>
+      </div>
+
+      <button id="ready-btn" disabled>Start question 01</button>
+    </section>
+
+    <section id="screen-question" class="screen">
+      <header class="qheader">
+        <div id="phase-badge" class="phase thinking">Thinking time</div>
+        <div id="qcount" class="muted">Question 01 / 03</div>
+        <div class="timer-group">
+          <div id="timer" class="timer">10:00</div>
+          <button id="skip-btn" type="button" class="secondary skip">Skip to answer</button>
+        </div>
+      </header>
+      <p id="phase-hint" class="muted small phase-hint"></p>
+      <div class="qbody">
+        <h2 id="qtitle"></h2>
+        <pre id="qcontent"></pre>
+      </div>
+      <div class="recording-previews">
+        <video id="recording-preview" autoplay muted playsinline title="Camera"></video>
+        <video id="screen-recording-preview" autoplay muted playsinline title="Screen"></video>
+      </div>
+    </section>
+
+    <section id="screen-uploading" class="screen">
+      <div class="kicker">
+        <span><span class="num">●</span> · Now Saving</span>
+        <span class="rule"></span>
+      </div>
+      <h2>Uploading your recording.</h2>
+      <p class="muted">Please don't close this tab.</p>
+      <div class="spinner"></div>
+    </section>
+
+    <section id="screen-done" class="screen">
+      <div class="kicker">
+        <span><span class="num">Round 01</span> · Complete</span>
+        <span class="rule"></span>
+        <span>Two more steps</span>
+      </div>
+      <h1>Thank you, but not like that.</h1>
+      <p>
+        We want to give you a few more hours. You can resubmit this within 24
+        hours with more thoughts and more research. We understand that some of
+        the topics might not be covered in your previous experience, but please
+        take the 24 hours to study and come back to us. We do not care that
+        much about results from the first round — we care more about your
+        take-home responses.
+      </p>
+      <ol>
+        <li>
+          <strong><a href="/questions.txt" download>Download all 3 questions</a></strong> for your reference.
+        </li>
+        <li>
+          Within the next 24 hours, record a more thoughtful take-home using
+          <strong>this private link</strong>:
+          <div class="copy-box">
+            <input id="round2-url" readonly />
+            <button id="copy-btn" type="button">Copy</button>
+          </div>
+          <p class="muted small">Save this link — we won't email it to you.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="screen-error" class="screen">
+      <div class="kicker">
+        <span><span class="num">●</span> · Error</span>
+        <span class="rule"></span>
+      </div>
+      <h2>Something went wrong.</h2>
+      <p id="error-message" class="error"></p>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

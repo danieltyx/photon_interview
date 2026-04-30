@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photon Interview · Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main id="app" class="admin">
+    <div class="kicker">
+      <span><span class="num">Photon</span> · Admin · Review</span>
+      <span class="rule"></span>
+      <span>Submissions</span>
+    </div>
+
+    <header class="admin-header">
+      <h1>Submissions</h1>
+      <button id="refresh-btn" type="button">Refresh</button>
+    </header>
+
+    <p id="admin-status" class="muted small">Loading…</p>
+    <div id="list"></div>
+  </main>
+  <script src="/admin.js"></script>
+</body>
+</html>
