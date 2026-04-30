@@ -1,4 +1,4 @@
-import { mkdir, writeFile, readFile, readdir } from "node:fs/promises";
+import { mkdir, writeFile, readFile, readdir, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { randomBytes, timingSafeEqual } from "node:crypto";
@@ -23,6 +23,8 @@ const FFMPEG_AVAILABLE = await checkFfmpeg();
 if (!FFMPEG_AVAILABLE) {
   console.warn("[warn] ffmpeg not found on PATH — uploads will only be available as .webm");
 }
+
+// Reconciliation runs at end of file (after all helpers are defined).
 
 const transcodeQueue: Array<() => Promise<void>> = [];
 let runningTranscodes = 0;
@@ -137,6 +139,61 @@ async function readMeta(sessionId: string): Promise<Meta | null> {
 
 async function writeMeta(meta: Meta): Promise<void> {
   await writeFile(join(sessionDir(meta.sessionId), "meta.json"), JSON.stringify(meta, null, 2));
+}
+
+// Per-session lock to serialize meta read/modify/write so concurrent uploads
+// don't clobber each other's updates.
+const metaLocks = new Map<string, Promise<unknown>>();
+function withMetaLock<T>(sessionId: string, fn: () => Promise<T>): Promise<T> {
+  const prev = metaLocks.get(sessionId) ?? Promise.resolve();
+  const next = prev.catch(() => {}).then(fn);
+  metaLocks.set(sessionId, next);
+  next.finally(() => {
+    if (metaLocks.get(sessionId) === next) metaLocks.delete(sessionId);
+  });
+  return next;
+}
+
+// On startup, walk submissions/ and patch any meta.json that's missing
+// entries for files that actually exist on disk (recovers from prior race).
+async function reconcileAllMeta(): Promise<void> {
+  const dirs = await readdir(SUBMISSIONS_DIR).catch(() => [] as string[]);
+  let patched = 0;
+  for (const sessionId of dirs) {
+    const meta = await readMeta(sessionId);
+    if (!meta) continue;
+    let changed = false;
+    for (const round of ["round1", "round2"] as const) {
+      const roundDir = join(sessionDir(sessionId), round);
+      const files = await readdir(roundDir).catch(() => [] as string[]);
+      for (const file of files) {
+        const m = file.match(/^q([1-3])_(camera|screen)\.webm$/);
+        if (!m) continue;
+        const [, q, kind] = m;
+        const qKey = `q${q}`;
+        const k = kind as "camera" | "screen";
+        meta.uploads[round][qKey] ??= {};
+        if (!meta.uploads[round][qKey][k]) {
+          const s = await stat(join(roundDir, file));
+          meta.uploads[round][qKey][k] = {
+            filename: file,
+            size: s.size,
+            uploadedAt: s.mtime.toISOString(),
+          };
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      const q3 = meta.uploads.round1.q3;
+      if (q3?.camera && q3?.screen && !meta.round1CompletedAt) {
+        meta.round1CompletedAt = new Date().toISOString();
+      }
+      await writeMeta(meta);
+      patched++;
+    }
+  }
+  if (patched > 0) console.log(`[reconcile] patched ${patched} session meta file(s)`);
 }
 
 function safeFilename(s: string): string {
@@ -285,9 +342,10 @@ Bun.serve({
       const upMatch = path.match(/^\/upload\/([a-f0-9]{32})\/(round1|round2)\/([1-3])\/(camera|screen)$/);
       if (method === "POST" && upMatch) {
         const [, sessionId, round, qIdx, kind] = upMatch;
-        const meta = await readMeta(sessionId);
-        if (!meta) return new Response("session not found", { status: 404 });
-        if (round === "round2" && meta.round2SubmittedAt) {
+        // Quick existence/sanity checks BEFORE locking
+        const probe = await readMeta(sessionId);
+        if (!probe) return new Response("session not found", { status: 404 });
+        if (round === "round2" && probe.round2SubmittedAt) {
           return new Response("round 2 already submitted", { status: 400 });
         }
         let fd: FormData;
@@ -305,40 +363,48 @@ Bun.serve({
         await writeFile(dest, Buffer.from(await video.arrayBuffer()));
         enqueueTranscode(dest);
 
-        const r = round as "round1" | "round2";
-        const qKey = `q${qIdx}`;
-        meta.uploads[r][qKey] ??= {};
-        meta.uploads[r][qKey][kind as "camera" | "screen"] = {
-          filename,
-          size: video.size,
-          uploadedAt: new Date().toISOString(),
-        };
-        // Round 1 complete only when q3 has both camera and screen
-        if (round === "round1" && qIdx === "3") {
-          const q3 = meta.uploads.round1.q3;
-          if (q3?.camera && q3?.screen) {
-            meta.round1CompletedAt = new Date().toISOString();
+        // Serialize meta read-modify-write so the camera + screen uploads
+        // for the same question don't race and clobber each other.
+        await withMetaLock(sessionId, async () => {
+          const meta = await readMeta(sessionId);
+          if (!meta) return;
+          const r = round as "round1" | "round2";
+          const qKey = `q${qIdx}`;
+          meta.uploads[r][qKey] ??= {};
+          meta.uploads[r][qKey][kind as "camera" | "screen"] = {
+            filename,
+            size: video.size,
+            uploadedAt: new Date().toISOString(),
+          };
+          if (round === "round1" && qIdx === "3") {
+            const q3 = meta.uploads.round1.q3;
+            if (q3?.camera && q3?.screen) {
+              meta.round1CompletedAt = new Date().toISOString();
+            }
           }
-        }
-        await writeMeta(meta);
+          await writeMeta(meta);
+        });
         return Response.json({ ok: true });
       }
 
       // ---------- Submit round 2 ----------
       const submitMatch = path.match(/^\/submit-round2\/([a-f0-9]{32})$/);
       if (method === "POST" && submitMatch) {
-        const meta = await readMeta(submitMatch[1]);
-        if (!meta) return new Response("session not found", { status: 404 });
-        if (meta.round2SubmittedAt) return new Response("already submitted", { status: 400 });
-        for (const q of ["q1", "q2", "q3"]) {
-          const u = meta.uploads.round2[q];
-          if (!u?.camera || !u?.screen) {
-            return new Response(`missing ${q} (need both camera and screen)`, { status: 400 });
+        const sessionId = submitMatch[1];
+        return await withMetaLock(sessionId, async () => {
+          const meta = await readMeta(sessionId);
+          if (!meta) return new Response("session not found", { status: 404 });
+          if (meta.round2SubmittedAt) return new Response("already submitted", { status: 400 });
+          for (const q of ["q1", "q2", "q3"]) {
+            const u = meta.uploads.round2[q];
+            if (!u?.camera || !u?.screen) {
+              return new Response(`missing ${q} (need both camera and screen)`, { status: 400 });
+            }
           }
-        }
-        meta.round2SubmittedAt = new Date().toISOString();
-        await writeMeta(meta);
-        return Response.json({ ok: true });
+          meta.round2SubmittedAt = new Date().toISOString();
+          await writeMeta(meta);
+          return Response.json({ ok: true });
+        });
       }
 
       // ---------- Admin (basic auth) ----------
@@ -386,3 +452,7 @@ Bun.serve({
 console.log(`photon_interview listening on :${PORT}`);
 console.log(`  submissions dir: ${SUBMISSIONS_DIR}`);
 console.log(`  admin:           http://localhost:${PORT}/admin (password: ADMIN_PASSWORD env)`);
+
+// Reconcile any meta.json that's out of sync with files on disk
+// (e.g. from earlier race conditions). Fire-and-forget at startup.
+reconcileAllMeta().catch((err) => console.error("[reconcile] failed:", err));
