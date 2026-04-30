@@ -342,8 +342,23 @@ button.skip {
 }
 #intake-error { margin-top: 16px; }
 
+.closing-note {
+  margin: clamp(48px, 6vw, 80px) 0 0;
+  padding: 28px 32px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(17px, 2vw, 22px);
+  line-height: 1.45;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r-md);
+  max-width: none;
+}
+
 .intake-footer {
-  margin-top: clamp(56px, 8vw, 96px);
+  margin-top: clamp(40px, 5vw, 56px);
   padding-top: 24px;
   border-top: 1px solid var(--line);
 }

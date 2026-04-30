@@ -173,7 +173,7 @@ async function startQuestion() {
   show("screen-question");
 
   startRecorders();
-  await runPhase("thinking", 600);
+  await runPhase("thinking", 900);
   await runPhase("answering", 120);
 
   show("screen-uploading");
@@ -210,7 +210,7 @@ function runPhase(phase, seconds) {
     skipBtn.disabled = false;
     hint.textContent = phase === "thinking"
       ? "Use any tool you want — ChatGPT, Claude, Google, your IDE, anything. Just keep it on the screen we're recording."
-      : "Walk us through your answer out loud. Your camera, mic, and screen are recording.";
+      : "Walk us through your idea and approach. You don't need a full solution — code snippets are fine if they help. Keep it under 2 minutes.";
 
     let remaining = seconds;
     let done = false;
