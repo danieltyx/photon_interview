@@ -129,10 +129,6 @@ function renderCards() {
         <button type="button" class="stop-btn secondary" data-idx="${idx}" disabled>Stop</button>
         <span class="status" id="status-${idx}">Share your screen above to enable recording</span>
       </div>
-      <div class="playback-row">
-        <video class="playback" id="playback-cam-${idx}" controls hidden></video>
-        <video class="playback" id="playback-scr-${idx}" controls hidden></video>
-      </div>
     `;
     container.appendChild(card);
   });
@@ -191,10 +187,6 @@ function startRecording(idx) {
     enableRecBtns();
     const camBlob = new Blob(camChunks, { type: camRec.mimeType || mime || "video/webm" });
     const scrBlob = new Blob(scrChunks, { type: scrRec.mimeType || mime || "video/webm" });
-    document.getElementById(`playback-cam-${idx}`).src = URL.createObjectURL(camBlob);
-    document.getElementById(`playback-cam-${idx}`).hidden = false;
-    document.getElementById(`playback-scr-${idx}`).src = URL.createObjectURL(scrBlob);
-    document.getElementById(`playback-scr-${idx}`).hidden = false;
     setStatus(idx, "Uploading…", "");
     try {
       await Promise.all([

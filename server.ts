@@ -1,4 +1,4 @@
-import { mkdir, writeFile, readFile, readdir, stat } from "node:fs/promises";
+import { mkdir, writeFile, readFile, readdir, stat, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { randomBytes, timingSafeEqual } from "node:crypto";
@@ -72,6 +72,7 @@ function enqueueTranscode(srcPath: string) {
 
 type Upload = { filename: string; size: number; uploadedAt: string };
 type QUploads = { camera?: Upload; screen?: Upload };
+type Decision = "pending" | "accept" | "waitlist" | "pass";
 type Meta = {
   sessionId: string;
   name: string;
@@ -82,6 +83,8 @@ type Meta = {
   createdAt: string;
   round1CompletedAt: string | null;
   round2SubmittedAt: string | null;
+  decision?: Decision;
+  decisionAt?: string | null;
   uploads: {
     round1: Record<string, QUploads>;
     round2: Record<string, QUploads>;
@@ -332,6 +335,8 @@ Bun.serve({
           createdAt: new Date().toISOString(),
           round1CompletedAt: null,
           round2SubmittedAt: null,
+          decision: "pending",
+          decisionAt: null,
           uploads: { round1: {}, round2: {} },
         };
         await writeMeta(meta);
@@ -415,6 +420,34 @@ Bun.serve({
         if (method === "GET" && path === "/admin.js") return serveStatic("admin.js");
         if (method === "GET" && path === "/admin/api/list") {
           return Response.json(await listSubmissions());
+        }
+        // ── Decision update ───────────────────────────────────────
+        const decMatch = path.match(/^\/admin\/decision\/([a-f0-9]{32})$/);
+        if (method === "POST" && decMatch) {
+          const sessionId = decMatch[1];
+          let body: any;
+          try { body = await req.json(); } catch { return new Response("bad body", { status: 400 }); }
+          const dec = body?.decision as Decision;
+          if (!["pending", "accept", "waitlist", "pass"].includes(dec)) {
+            return new Response("invalid decision", { status: 400 });
+          }
+          return await withMetaLock(sessionId, async () => {
+            const meta = await readMeta(sessionId);
+            if (!meta) return new Response("not found", { status: 404 });
+            meta.decision = dec;
+            meta.decisionAt = new Date().toISOString();
+            await writeMeta(meta);
+            return Response.json({ ok: true });
+          });
+        }
+        // ── Delete a submission ───────────────────────────────────
+        const delMatch = path.match(/^\/admin\/delete\/([a-f0-9]{32})$/);
+        if (method === "POST" && delMatch) {
+          const sessionId = delMatch[1];
+          const dir = sessionDir(sessionId);
+          if (!existsSync(dir)) return new Response("not found", { status: 404 });
+          await rm(dir, { recursive: true, force: true });
+          return Response.json({ ok: true });
         }
         const fileMatch = path.match(/^\/admin\/file\/([a-f0-9]{32})\/(.+)$/);
         if (method === "GET" && fileMatch) {
