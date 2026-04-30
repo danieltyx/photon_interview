@@ -25,28 +25,19 @@
   --ink-faint:    rgba(255, 255, 255, 0.28);
   --ink-ghost:    rgba(255, 255, 255, 0.12);
 
-  /* spectrum accents */
-  --blue:         #487ff7;
-  --blue-glow:    rgba(72, 127, 247, 0.35);
-  --green:        #7af090;
-  --green-glow:   rgba(122, 240, 144, 0.3);
-  --magenta:      #ce1697;
-  --magenta-glow: rgba(206, 22, 151, 0.3);
-  --coral:        #e3215e;
-  --coral-glow:   rgba(227, 33, 94, 0.3);
-  --gold:         #e1ba76;
-  --gold-glow:    rgba(225, 186, 118, 0.3);
-  --orange:       #c5502c;
+  /* single accent — RGB 217 133 54 */
+  --accent:       #d98536;
+  --accent-soft:  rgba(217, 133, 54, 0.55);
+  --accent-glow:  rgba(217, 133, 54, 0.32);
+  --accent-faint: rgba(217, 133, 54, 0.12);
 
-  /* semantic */
-  --accent:       var(--blue);
-  --accent-glow:  var(--blue-glow);
-  --rec:          var(--coral);
-  --think:        var(--gold);
-  --answer:       var(--coral);
-  --ok:           var(--green);
-  --warn:         var(--gold);
-  --err:          var(--coral);
+  /* semantic — all routed through the single accent or neutrals */
+  --rec:          var(--accent);
+  --think:        var(--ink-soft);
+  --answer:       var(--accent);
+  --ok:           var(--accent);
+  --warn:         var(--ink-soft);
+  --err:          var(--accent);
 
   /* type */
   --serif:  "Instrument Serif", "Times New Roman", Georgia, serif;
@@ -82,9 +73,8 @@ body {
   letter-spacing: -0.005em;
   min-height: 100vh;
   background-image:
-    radial-gradient(900px 700px at 78% -10%, var(--blue-glow), transparent 55%),
-    radial-gradient(700px 500px at -10% 110%, var(--coral-glow), transparent 55%),
-    radial-gradient(500px 400px at 50% 50%, rgba(122, 240, 144, 0.04), transparent 60%);
+    radial-gradient(900px 700px at 78% -10%, var(--accent-glow), transparent 55%),
+    radial-gradient(700px 500px at -10% 110%, var(--accent-faint), transparent 60%);
   background-attachment: fixed;
   background-color: var(--bg);
   overflow-x: hidden;
@@ -168,14 +158,14 @@ em { font-style: italic; color: var(--ink); }
 .late  { color: var(--warn); font-weight: 500; }
 
 a {
-  color: var(--blue);
+  color: var(--accent);
   text-decoration: underline;
-  text-decoration-color: rgba(72, 127, 247, 0.3);
+  text-decoration-color: rgba(217, 133, 54, 0.32);
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
   transition: text-decoration-color 220ms ease, color 220ms ease;
 }
-a:hover { text-decoration-color: var(--blue); }
+a:hover { text-decoration-color: var(--accent); }
 
 /* ─── kicker (small caps section labels) ───────────────────────────────── */
 .kicker {
@@ -245,9 +235,9 @@ form input::placeholder { color: var(--ink-faint); }
 form input:hover { border-color: var(--line-strong); background: var(--surface-2); }
 form input:focus {
   outline: none;
-  border-color: var(--blue);
+  border-color: var(--accent);
   background: var(--surface-2);
-  box-shadow: 0 0 0 4px rgba(72, 127, 247, 0.12);
+  box-shadow: 0 0 0 4px var(--accent-faint);
 }
 
 form input[type="file"] {
@@ -272,8 +262,8 @@ form input[type="file"]::file-selector-button {
   transition: all 220ms ease;
 }
 form input[type="file"]::file-selector-button:hover {
-  background: var(--blue);
-  color: #fff;
+  background: var(--accent);
+  color: #000;
 }
 
 /* ─── buttons ──────────────────────────────────────────────────────────── */
@@ -296,10 +286,10 @@ button {
   transition: background 220ms ease, color 220ms ease, border-color 220ms ease, transform 80ms ease, box-shadow 220ms ease, opacity 220ms ease;
 }
 button:hover:not(:disabled) {
-  background: var(--blue);
-  border-color: var(--blue);
-  color: #fff;
-  box-shadow: 0 8px 32px rgba(72, 127, 247, 0.3);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  box-shadow: 0 8px 32px var(--accent-glow);
 }
 button:active:not(:disabled) { transform: scale(0.985); }
 button:disabled { opacity: 0.32; cursor: not-allowed; }
@@ -477,15 +467,15 @@ button.skip {
   background: var(--ink-faint);
   transition: background 600ms ease, box-shadow 600ms ease;
 }
-.phase.thinking { color: var(--gold); }
+.phase.thinking { color: var(--ink-soft); }
 .phase.thinking::before {
-  background: var(--gold);
-  box-shadow: 0 0 18px var(--gold-glow);
+  background: var(--ink-soft);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
 }
-.phase.answering { color: var(--coral); }
+.phase.answering { color: var(--accent); }
 .phase.answering::before {
-  background: var(--coral);
-  box-shadow: 0 0 18px var(--coral-glow);
+  background: var(--accent);
+  box-shadow: 0 0 18px var(--accent-glow);
   animation: pulse 1.4s ease-in-out infinite;
 }
 @keyframes pulse {
@@ -506,11 +496,8 @@ button.skip {
   text-shadow: 0 0 60px rgba(255, 255, 255, 0.06);
 }
 .qheader .phase.answering ~ .timer-group .timer {
-  color: var(--coral);
-  text-shadow: 0 0 80px var(--coral-glow);
-}
-.qheader .phase.thinking ~ .timer-group .timer {
-  text-shadow: 0 0 80px var(--gold-glow);
+  color: var(--accent);
+  text-shadow: 0 0 80px var(--accent-glow);
 }
 
 .phase-hint {
@@ -577,7 +564,7 @@ button.skip {
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--coral);
+  color: var(--accent);
   background: var(--bg);
   padding: 0 12px 0 0;
   animation: blink 1.6s ease-in-out infinite;
@@ -612,7 +599,7 @@ button.skip {
   width: 36px;
   height: 36px;
   border: 1px solid var(--line);
-  border-top-color: var(--blue);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1.2s linear infinite;
   margin: 40px auto 0;
@@ -641,7 +628,7 @@ button.skip {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.16em;
-  color: var(--blue);
+  color: var(--accent);
 }
 #screen-done ol li > p:last-child { margin-top: 8px; }
 
@@ -749,10 +736,10 @@ button.skip {
   min-width: 200px;
   flex: 1;
 }
-.rec-controls .status.ok  { color: var(--green); }
-.rec-controls .status.err { color: var(--coral); }
+.rec-controls .status.ok  { color: var(--accent); }
+.rec-controls .status.err { color: var(--accent); }
 .rec-controls .status.recording {
-  color: var(--coral);
+  color: var(--accent);
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -763,8 +750,8 @@ button.skip {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--coral);
-  box-shadow: 0 0 12px var(--coral-glow);
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
   animation: pulse 1.4s ease-in-out infinite;
 }
 
@@ -783,9 +770,9 @@ button.skip {
   color: #000;
 }
 #submit-all:hover:not(:disabled) {
-  background: var(--blue);
-  color: #fff;
-  box-shadow: 0 12px 40px rgba(72, 127, 247, 0.3);
+  background: var(--accent);
+  color: #000;
+  box-shadow: 0 12px 40px var(--accent-glow);
 }
 
 #submit-error { margin-top: 16px; text-align: center; }
@@ -820,8 +807,8 @@ button.skip {
 }
 .admin-header button:hover {
   background: transparent;
-  border-color: var(--blue);
-  color: var(--blue);
+  border-color: var(--accent);
+  color: var(--accent);
   box-shadow: none;
 }
 
@@ -881,9 +868,9 @@ button.skip {
   background: transparent;
   transition: background 240ms ease;
 }
-.submission[data-decision="accept"]::before   { background: var(--green); box-shadow: 0 0 16px var(--green-glow); }
-.submission[data-decision="waitlist"]::before { background: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
-.submission[data-decision="pass"]::before     { background: var(--coral); box-shadow: 0 0 16px var(--coral-glow); }
+.submission[data-decision="accept"]::before   { background: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
+.submission[data-decision="waitlist"]::before { background: var(--ink-soft); box-shadow: 0 0 12px rgba(255, 255, 255, 0.2); }
+.submission[data-decision="pass"]::before     { background: var(--ink-faint); }
 
 .db-row {
   display: grid;
@@ -957,9 +944,9 @@ button.skip {
 }
 .decision-select option { background: var(--surface); color: var(--ink); }
 .decision-select:hover { border-color: var(--line-strong); }
-.decision-select.decision-accept   { border-color: rgba(122, 240, 144, 0.5); color: var(--green); }
-.decision-select.decision-waitlist { border-color: rgba(225, 186, 118, 0.5); color: var(--gold); }
-.decision-select.decision-pass     { border-color: rgba(227, 33, 94, 0.5); color: var(--coral); }
+.decision-select.decision-accept   { border-color: var(--accent-soft); color: var(--accent); }
+.decision-select.decision-waitlist { border-color: var(--line-strong); color: var(--ink); }
+.decision-select.decision-pass     { border-color: var(--line); color: var(--ink-faint); }
 
 .ghost-btn {
   padding: 8px 14px;
@@ -975,8 +962,8 @@ button.skip {
 }
 .ghost-btn:hover:not(:disabled) {
   background: transparent;
-  border-color: var(--coral);
-  color: var(--coral);
+  border-color: var(--accent);
+  color: var(--accent);
   box-shadow: none;
 }
 
@@ -1004,7 +991,7 @@ button.skip {
   color: var(--ink-muted);
 }
 .kv .v { color: var(--ink-soft); word-break: break-word; }
-.ok-text { color: var(--green); }
+.ok-text { color: var(--accent); }
 
 .round-block { margin-top: 22px; }
 .round-label {
@@ -1012,7 +999,7 @@ button.skip {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: var(--blue);
+  color: var(--accent);
   margin: 0 0 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line-soft);
@@ -1040,17 +1027,17 @@ button.skip {
   border-radius: 50%;
 }
 .pill.ok {
-  color: var(--green);
-  border-color: rgba(122, 240, 144, 0.4);
+  color: var(--accent);
+  border-color: var(--accent-soft);
 }
-.pill.ok::before { background: var(--green); box-shadow: 0 0 8px var(--green-glow); }
+.pill.ok::before { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
 .pill.pending {
   color: var(--ink-muted);
   border-color: var(--line);
 }
 .pill.pending::before { background: var(--ink-muted); }
-.pill.late { color: var(--gold); border-color: rgba(225, 186, 118, 0.5); }
-.pill.late::before { background: var(--gold); }
+.pill.late { color: var(--accent); border-color: var(--accent-soft); opacity: 0.8; }
+.pill.late::before { background: var(--accent); }
 
 /* video grid (admin) */
 .video-grid {
@@ -1069,7 +1056,7 @@ button.skip {
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 500;
-  color: var(--blue);
+  color: var(--accent);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   margin: 0 0 14px;
@@ -1140,4 +1127,4 @@ video { display: block; background: #000; }
 }
 
 /* ─── selection ────────────────────────────────────────────────────────── */
-::selection { background: var(--blue-glow); color: var(--ink); }
+::selection { background: var(--accent-glow); color: var(--ink); }
