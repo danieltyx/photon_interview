@@ -209,8 +209,8 @@ function runPhase(phase, seconds) {
     skipBtn.textContent = phase === "thinking" ? "Skip to answer" : "Done — next question";
     skipBtn.disabled = false;
     hint.textContent = phase === "thinking"
-      ? "Use any tool you want — ChatGPT, Claude, Google, your IDE, anything. Just keep it on the screen we're recording."
-      : "Walk us through your idea and approach. You don't need a full solution — code snippets are fine if they help. Keep it under 2 minutes.";
+      ? "Read the tool policy at the top of the question. Keep whatever you use on the screen we're recording."
+      : "Walk us through your idea or thinking. You can write code, talk it through, or both. Keep it under 2 minutes.";
 
     let remaining = seconds;
     let done = false;
