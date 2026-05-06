@@ -165,16 +165,30 @@ function stopRecorders() {
 async function startQuestion() {
   const idx = state.currentQ;
   const q = state.questions[idx];
+  const isCoding = q.kind === "leetcode-coding";
   document.getElementById("qtitle").textContent = q.title;
   document.getElementById("qcontent").textContent = q.body;
   document.getElementById("qcount").textContent = `Question ${idx + 1} of ${state.questions.length}`;
   document.getElementById("recording-preview").srcObject = state.cameraStream;
   document.getElementById("screen-recording-preview").srcObject = state.screenStream;
+
+  const link = document.getElementById("leetcode-link");
+  if (q.leetcodeUrl) {
+    link.href = q.leetcodeUrl;
+    link.hidden = false;
+  } else {
+    link.hidden = true;
+  }
+
   show("screen-question");
 
   startRecorders();
-  await runPhase("thinking", 900);
-  await runPhase("answering", 120);
+  if (isCoding) {
+    await runPhase("coding", 900);
+  } else {
+    await runPhase("thinking", 900);
+    await runPhase("answering", 120);
+  }
 
   show("screen-uploading");
   const [cameraBlob, screenBlob] = await stopRecorders();
@@ -190,12 +204,66 @@ async function startQuestion() {
     return;
   }
 
+  if (isCoding) {
+    await collectSelfReport("round1", idx + 1, q.title);
+  }
+
   state.currentQ++;
   if (state.currentQ < state.questions.length) {
     startQuestion();
   } else {
     showDone();
   }
+}
+
+function collectSelfReport(round, qNum, qTitle) {
+  return new Promise((resolve) => {
+    document.getElementById("sr-title").textContent = "How did it go?";
+    document.getElementById("sr-qtitle").textContent = qTitle;
+    document.getElementById("sr-qcount").textContent =
+      `Question ${qNum} / ${state.questions.length}`;
+    const radios = document.querySelectorAll('input[name="sr-result"]');
+    radios.forEach((r) => (r.checked = false));
+    const notes = document.getElementById("sr-notes");
+    notes.value = "";
+    const btn = document.getElementById("sr-continue");
+    const errEl = document.getElementById("sr-error");
+    errEl.hidden = true;
+    btn.disabled = true;
+    btn.textContent = "Continue";
+
+    const onChange = () => {
+      btn.disabled = ![...radios].some((r) => r.checked);
+    };
+    radios.forEach((r) => r.addEventListener("change", onChange));
+
+    const onClick = async () => {
+      const chosen = [...radios].find((r) => r.checked);
+      if (!chosen) return;
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      errEl.hidden = true;
+      try {
+        const res = await fetch(`/self-report/${state.sessionId}/${round}/${qNum}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ result: chosen.value, notes: notes.value }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        radios.forEach((r) => r.removeEventListener("change", onChange));
+        btn.removeEventListener("click", onClick);
+        resolve();
+      } catch (err) {
+        errEl.textContent = "Could not save: " + (err.message || err);
+        errEl.hidden = false;
+        btn.disabled = false;
+        btn.textContent = "Continue";
+      }
+    };
+    btn.addEventListener("click", onClick);
+
+    show("screen-self-report");
+  });
 }
 
 function runPhase(phase, seconds) {
@@ -205,12 +273,21 @@ function runPhase(phase, seconds) {
     const skipBtn = document.getElementById("skip-btn");
     const hint = document.getElementById("phase-hint");
     badge.className = "phase " + phase;
-    badge.textContent = phase === "thinking" ? "THINKING TIME" : "ANSWER TIME";
-    skipBtn.textContent = phase === "thinking" ? "Skip to answer" : "Done — next question";
+    badge.textContent =
+      phase === "thinking" ? "THINKING TIME" :
+      phase === "coding"   ? "CODING TIME"   :
+                             "ANSWER TIME";
+    skipBtn.textContent =
+      phase === "thinking" ? "Skip to answer" :
+      phase === "coding"   ? "Done — report result" :
+                             "Done — next question";
     skipBtn.disabled = false;
-    hint.textContent = phase === "thinking"
-      ? "Read the tool policy at the top of the question. Keep whatever you use on the screen we're recording."
-      : "Walk us through your idea or thinking. You can write code, talk it through, or both. Keep it under 2 minutes.";
+    hint.textContent =
+      phase === "thinking"
+        ? "Read the tool policy at the top of the question. Keep whatever you use on the screen we're recording."
+      : phase === "coding"
+        ? "Open the LeetCode link and code your solution there. Keep the LeetCode tab visible — your screen is being recorded. You'll report the result on the next screen."
+        : "Walk us through your idea or thinking. You can write code, talk it through, or both. Keep it under 2 minutes.";
 
     let remaining = seconds;
     let done = false;

@@ -25,20 +25,21 @@
       </p>
 
       <p>
-        Three questions. For each you'll get <strong>15&nbsp;minutes to think</strong>,
-        then <strong>2&nbsp;minutes to walk us through your idea</strong> out loud.
-        You can write code, talk through your solution, or walk us through your
-        thinking process if you can't get to one — whatever helps. The approach
-        matters more than a complete answer. Your camera, microphone, and screen
-        are recorded the entire time. There are no retakes and no going back.
+        Three questions. The first two are coding problems on
+        <strong>LeetCode</strong> — you'll open the problem there and write your
+        solution in LeetCode's editor for <strong>15&nbsp;minutes</strong>, then
+        report whether you passed. The third is a system-design discussion:
+        <strong>15&nbsp;minutes to think</strong>, then
+        <strong>2&nbsp;minutes to walk us through your idea</strong> out loud.
+        Your camera, microphone, and screen are recorded the entire time. There
+        are no retakes and no going back.
       </p>
       <p>
-        <strong>Tool policy.</strong> The first two questions are coding problems
-        (LeetCode-style). For those, please <strong>don't use ChatGPT, Claude Code,
-        Cursor, or other AI coding tools</strong> — Google search is fine. The third
-        question is a system design discussion where any tool is welcome. The exact
-        policy is at the top of each question. Whatever you use, keep it on the
-        screen we're recording.
+        <strong>Tool policy.</strong> For the two LeetCode questions, please
+        <strong>don't use ChatGPT, Claude Code, Cursor, or other AI coding
+        tools</strong> — Google search is fine. The third question (system design)
+        is open: any tool is welcome. The exact policy is at the top of each
+        question. Whatever you use, keep it on the screen we're recording.
       </p>
       <p>
         One small piece of advice: don't paste the whole question wholesale into
@@ -129,12 +130,52 @@
       <p id="phase-hint" class="muted small phase-hint"></p>
       <div class="qbody">
         <h2 id="qtitle"></h2>
+        <a id="leetcode-link" class="leetcode-cta" href="#" target="_blank" rel="noopener" hidden>Open problem on LeetCode →</a>
         <pre id="qcontent"></pre>
       </div>
       <div class="recording-previews">
         <video id="recording-preview" autoplay muted playsinline title="Camera"></video>
         <video id="screen-recording-preview" autoplay muted playsinline title="Screen"></video>
       </div>
+    </section>
+
+    <section id="screen-self-report" class="screen">
+      <div class="kicker">
+        <span><span class="num">●</span> · Self-report</span>
+        <span class="rule"></span>
+        <span id="sr-qcount">Question 01 / 03</span>
+      </div>
+      <h2 id="sr-title">How did it go?</h2>
+      <p>
+        Tell us the result of your LeetCode session for
+        <strong id="sr-qtitle"></strong>. Be honest — partial answers and
+        approaches are valuable to us too.
+      </p>
+
+      <div class="sr-options">
+        <label class="sr-option">
+          <input type="radio" name="sr-result" value="passed" />
+          <span class="sr-label">Passed</span>
+          <span class="sr-sub">All test cases passed on Submit.</span>
+        </label>
+        <label class="sr-option">
+          <input type="radio" name="sr-result" value="failed" />
+          <span class="sr-label">Did not pass</span>
+          <span class="sr-sub">Submitted but failed test cases, or couldn't get a working solution.</span>
+        </label>
+        <label class="sr-option">
+          <input type="radio" name="sr-result" value="other" />
+          <span class="sr-label">Partial / Other</span>
+          <span class="sr-sub">Ran out of time, partial pass, runtime error, etc. — describe below.</span>
+        </label>
+      </div>
+
+      <label class="sr-notes-label">Notes (optional)
+        <textarea id="sr-notes" rows="3" placeholder="e.g. passed 3/5 test cases, hit edge case on overflow"></textarea>
+      </label>
+
+      <button id="sr-continue" type="button" disabled>Continue</button>
+      <p id="sr-error" class="error" hidden></p>
     </section>
 
     <section id="screen-uploading" class="screen">

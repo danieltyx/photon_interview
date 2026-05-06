@@ -71,7 +71,9 @@ function enqueueTranscode(srcPath: string) {
 }
 
 type Upload = { filename: string; size: number; uploadedAt: string };
-type QUploads = { camera?: Upload; screen?: Upload };
+type SelfReportResult = "passed" | "failed" | "other";
+type SelfReport = { result: SelfReportResult; notes?: string; reportedAt: string };
+type QUploads = { camera?: Upload; screen?: Upload; selfReport?: SelfReport };
 type Decision = "pending" | "accept" | "waitlist" | "pass";
 type Meta = {
   sessionId: string;
@@ -390,6 +392,36 @@ Bun.serve({
           await writeMeta(meta);
         });
         return Response.json({ ok: true });
+      }
+
+      // ---------- Self-report (LeetCode result for q1/q2) ----------
+      const srMatch = path.match(/^\/self-report\/([a-f0-9]{32})\/(round1|round2)\/([1-3])$/);
+      if (method === "POST" && srMatch) {
+        const [, sessionId, round, qIdx] = srMatch;
+        let body: any;
+        try { body = await req.json(); } catch { return new Response("bad body", { status: 400 }); }
+        const result = body?.result as SelfReportResult;
+        if (!["passed", "failed", "other"].includes(result)) {
+          return new Response("invalid result", { status: 400 });
+        }
+        const notes = typeof body?.notes === "string" ? body.notes.slice(0, 2000) : undefined;
+        return await withMetaLock(sessionId, async () => {
+          const meta = await readMeta(sessionId);
+          if (!meta) return new Response("session not found", { status: 404 });
+          if (round === "round2" && meta.round2SubmittedAt) {
+            return new Response("round 2 already submitted", { status: 400 });
+          }
+          const r = round as "round1" | "round2";
+          const qKey = `q${qIdx}`;
+          meta.uploads[r][qKey] ??= {};
+          meta.uploads[r][qKey].selfReport = {
+            result,
+            notes,
+            reportedAt: new Date().toISOString(),
+          };
+          await writeMeta(meta);
+          return Response.json({ ok: true });
+        });
       }
 
       // ---------- Submit round 2 ----------

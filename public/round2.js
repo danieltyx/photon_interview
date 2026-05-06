@@ -6,6 +6,7 @@ const state = {
   recorders: {},      // idx -> { camera, screen }
   uploaded: { 0: { camera: false, screen: false }, 1: { camera: false, screen: false }, 2: { camera: false, screen: false } },
   recording: { 0: false, 1: false, 2: false },
+  selfReported: { 0: false, 1: false, 2: false },
   submitted: false,
 };
 
@@ -121,14 +122,32 @@ function renderCards() {
   state.questions.forEach((q, idx) => {
     const card = document.createElement("div");
     card.className = "qcard";
+    const linkHtml = q.leetcodeUrl
+      ? `<a class="leetcode-cta" href="${escapeHtml(q.leetcodeUrl)}" target="_blank" rel="noopener">Open problem on LeetCode →</a>`
+      : "";
+    const isCoding = q.kind === "leetcode-coding";
+    const reportHtml = isCoding ? `
+      <div class="sr-block" data-idx="${idx}">
+        <div class="sr-block-label">Result of your LeetCode session</div>
+        <div class="sr-options compact">
+          <label class="sr-option"><input type="radio" name="sr-${idx}" value="passed" /><span class="sr-label">Passed</span></label>
+          <label class="sr-option"><input type="radio" name="sr-${idx}" value="failed" /><span class="sr-label">Did not pass</span></label>
+          <label class="sr-option"><input type="radio" name="sr-${idx}" value="other" /><span class="sr-label">Partial / Other</span></label>
+        </div>
+        <textarea class="sr-notes" id="sr-notes-${idx}" rows="2" placeholder="Notes (optional) — e.g. passed 3/5 test cases"></textarea>
+        <span class="status sr-status" id="sr-status-${idx}">Required before submit</span>
+      </div>
+    ` : "";
     card.innerHTML = `
       <h3>Question ${idx + 1}: ${escapeHtml(q.title)}</h3>
+      ${linkHtml}
       <pre>${escapeHtml(q.body)}</pre>
       <div class="rec-controls">
         <button type="button" class="rec-btn" data-idx="${idx}" disabled>Start recording</button>
         <button type="button" class="stop-btn secondary" data-idx="${idx}" disabled>Stop</button>
         <span class="status" id="status-${idx}">Share your screen above to enable recording</span>
       </div>
+      ${reportHtml}
     `;
     container.appendChild(card);
   });
@@ -138,6 +157,43 @@ function renderCards() {
   container.querySelectorAll(".stop-btn").forEach((b) =>
     b.addEventListener("click", (e) => stopRecording(Number(e.currentTarget.dataset.idx)))
   );
+  // Self-report wiring (radio change + debounced save on notes blur)
+  state.questions.forEach((q, idx) => {
+    if (q.kind !== "leetcode-coding") return;
+    const radios = document.querySelectorAll(`input[name="sr-${idx}"]`);
+    const notes = document.getElementById(`sr-notes-${idx}`);
+    const save = async () => {
+      const chosen = [...radios].find((r) => r.checked);
+      if (!chosen) return;
+      setSrStatus(idx, "Saving…", "");
+      try {
+        const res = await fetch(`/self-report/${sessionId}/round2/${idx + 1}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ result: chosen.value, notes: notes.value }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        state.selfReported[idx] = true;
+        setSrStatus(idx, "Saved", "ok");
+        maybeEnableSubmit();
+      } catch (err) {
+        state.selfReported[idx] = false;
+        setSrStatus(idx, "Save failed: " + (err.message || err), "err");
+        maybeEnableSubmit();
+      }
+    };
+    radios.forEach((r) => r.addEventListener("change", save));
+    notes.addEventListener("blur", () => {
+      if ([...radios].some((r) => r.checked)) save();
+    });
+  });
+}
+
+function setSrStatus(idx, text, cls) {
+  const el = document.getElementById(`sr-status-${idx}`);
+  if (!el) return;
+  el.textContent = text;
+  el.className = "status sr-status" + (cls ? " " + cls : "");
 }
 
 function pickMimeType() {
@@ -252,7 +308,10 @@ async function uploadVideo(qNum, kind, blob) {
 function maybeEnableSubmit() {
   const allUploaded = [0, 1, 2].every((i) => state.uploaded[i].camera && state.uploaded[i].screen);
   const anyRecording = Object.values(state.recording).some(Boolean);
-  document.getElementById("submit-all").disabled = !allUploaded || anyRecording;
+  const codingReported = state.questions.every((q, i) =>
+    q.kind === "leetcode-coding" ? state.selfReported[i] : true
+  );
+  document.getElementById("submit-all").disabled = !allUploaded || anyRecording || !codingReported;
 }
 
 async function submitAll() {

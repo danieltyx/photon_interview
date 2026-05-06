@@ -167,7 +167,18 @@ function renderVideos(sessionId, round, uploads) {
         <video src="${url}" controls preload="metadata"></video>
       </div>`;
     }).join("");
-    return `<div class="vid-cell"><div class="vid-q-label">${q}</div>${subs}</div>`;
+    const sr = u.selfReport;
+    let srHtml = "";
+    if (sr) {
+      const labels = { passed: "Passed", failed: "Did not pass", other: "Partial / Other" };
+      const cls = sr.result === "passed" ? "ok" : sr.result === "failed" ? "err" : "";
+      srHtml = `<div class="vid-sr ${cls}">
+        <span class="vid-sr-label">Self-report</span>
+        <span class="vid-sr-result">${escapeHtml(labels[sr.result] || sr.result)}</span>
+        ${sr.notes ? `<div class="vid-sr-notes">${escapeHtml(sr.notes)}</div>` : ""}
+      </div>`;
+    }
+    return `<div class="vid-cell"><div class="vid-q-label">${q}</div>${subs}${srHtml}</div>`;
   }).join("");
   return `<div class="video-grid">${cells}</div>`;
 }
