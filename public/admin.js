@@ -84,6 +84,22 @@ function renderTable(items) {
   });
 }
 
+function srPill(meta, qKey) {
+  // Prefer round2 self-report (take-home, more thoughtful) over round1.
+  const sr = meta.uploads?.round2?.[qKey]?.selfReport
+        ?? meta.uploads?.round1?.[qKey]?.selfReport;
+  if (!sr) return `<span class="sr-pill none" title="No result reported">${qKey.toUpperCase()} —</span>`;
+  const label = sr.result === "passed" ? "PASS"
+              : sr.result === "failed" ? "FAIL"
+              :                          "PARTIAL";
+  const cls = sr.result === "passed" ? "pass"
+            : sr.result === "failed" ? "fail"
+            :                          "partial";
+  const round = meta.uploads?.round2?.[qKey]?.selfReport ? "Round 2" : "Round 1";
+  const tip = `${round} · ${sr.result}${sr.notes ? ` · ${sr.notes}` : ""}`;
+  return `<span class="sr-pill ${cls}" title="${escapeAttr(tip)}">${qKey.toUpperCase()} ${label}</span>`;
+}
+
 function renderRow(meta) {
   const decision = meta.decision || "pending";
   const created = new Date(meta.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -107,6 +123,8 @@ function renderRow(meta) {
         <span class="col col-status">
           <span class="pill ${r1}">R1</span>
           <span class="pill ${r2} ${r2Late}">R2${r2Late ? " · late" : ""}</span>
+          ${srPill(meta, "q1")}
+          ${srPill(meta, "q2")}
         </span>
         <span class="col col-decision">
           <select data-action="decision" data-id="${meta.sessionId}" class="decision-select decision-${decision}">

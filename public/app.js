@@ -184,7 +184,7 @@ async function startQuestion() {
 
   startRecorders();
   if (isCoding) {
-    await runPhase("coding", 900);
+    await runPhase("coding", 1800);
   } else {
     await runPhase("thinking", 900);
     await runPhase("answering", 120);
